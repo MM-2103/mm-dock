@@ -1,0 +1,37 @@
+# Caddyfile for Laravel application
+# HTTP on port 8080, HTTPS on port 8443 (automatic redirect)
+
+# HTTP server - no TLS
+http://localhost:8080 {
+    # Redirect to HTTPS
+    redir https://localhost:8443{uri}
+}
+
+# HTTPS server with internal certificates
+https://switch-the-gym-laravel.localhost:8443 {
+    root * /var/www/work/switch-the-gym-laravel/public
+
+    # Enable compression
+    encode gzip
+
+    # PHP FastCGI to php-fpm container
+    php_fastcgi php-fpm:9000
+
+    # Serve static files
+    file_server
+
+    # Laravel routing - try files, then index.php
+    @notFile {
+        not file
+    }
+    rewrite @notFile /index.php?{query}
+
+    # Internal (self-signed) certificates
+    tls internal
+
+    # Logging to stdout (visible with podman logs)
+    log {
+        output stdout
+        format json
+    }
+}
