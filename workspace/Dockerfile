@@ -2,22 +2,19 @@
 # Image Setup
 # --------------------------------------------------------------------------
 
-FROM phusion/baseimage:jammy-1.0.0
+FROM ubuntu:22.04
 
 LABEL maintainer="Cerberos <development@cerberos.dev>"
 
 # --------------------------------------------------------------------------
-# Mandatory Software's Installation
+# Prevent interactive prompts during build
 # --------------------------------------------------------------------------
 
-RUN DEBIAN_FRONTEND=noninteractive
-RUN locale-gen en_US.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV LANGUAGE=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV LC_CTYPE=en_US.UTF-8
-ENV LANG=en_US.UTF-8
-ENV TERM xterm
+# --------------------------------------------------------------------------
+# Mandatory Software's Installation
+# --------------------------------------------------------------------------
 
 RUN apt-get update && \
     apt-get install -y \
@@ -33,8 +30,21 @@ RUN apt-get update && \
         nghttp2 \
         pkg-config \
         wget \
-        xz-utils
+        xz-utils \
+        locales \
+        ca-certificates \
+        git \
+        vim \
+        nano
 
+# Generate locales
+RUN locale-gen en_US.UTF-8
+
+ENV LANGUAGE=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LC_CTYPE=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV TERM=xterm
 
 # --------------------------------------------------------------------------
 # Optional Software's Installation
@@ -42,7 +52,6 @@ RUN apt-get update && \
 # Optional Software's will only be installed if you set them to `true`
 # in the `docker-compose.yml` before the build.
 # --------------------------------------------------------------------------
-
 
 # --------------------------------------------------------------------------
 # SSH
@@ -70,8 +79,8 @@ RUN if [ ${INSTALL_CARGO} = true ]; then \
 ARG PUID=1000
 ARG PGID=1000
 
-ENV PUID ${PUID}
-ENV PGID ${PGID}
+ENV PUID=${PUID}
+ENV PGID=${PGID}
 
 RUN groupadd -g ${PGID} crbdock && \
     useradd -u ${PUID} -g crbdock -m crbdock && \
@@ -82,14 +91,12 @@ RUN groupadd -g ${PGID} crbdock && \
 # --------------------------------------------------------------------------
 
 ARG TZ=UTC
-ENV TZ ${TZ}
+ENV TZ=${TZ}
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # --------------------------------------------------------------------------
-# Crontab
+# Crontab (optional - disabled by default)
 # --------------------------------------------------------------------------
-
-USER root
 
 COPY ./crontab /etc/cron.d
 RUN chmod -R 644 /etc/cron.d
@@ -120,9 +127,14 @@ RUN echo "" >> ~/.bashrc && \
 # --------------------------------------------------------------------------
 
 # Clean up
-USER root
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set default work directory
 WORKDIR /var/www
+
+# Switch to non-root user by default
+USER crbdock
+
+# Keep container running with a simple tail command
+CMD ["tail", "-f", "/dev/null"]
