@@ -92,3 +92,8 @@ auth.json
 *.key
 *.csr
 
+# Caddy per-site configs (local only, not committed) #
+######################################################
+/caddy/sites/*
+!/caddy/sites/.gitkeep
+
