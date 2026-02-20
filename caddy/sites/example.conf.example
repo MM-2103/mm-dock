@@ -1,0 +1,40 @@
+# Example Caddy site configuration for a Laravel project.
+# Copy this file and rename it (e.g. my-project.conf) to get started.
+# Files ending in .conf are loaded automatically via the Caddyfile import.
+# Files ending in .conf.example are ignored by the import glob.
+#
+# Usage:
+#   cp example.conf.example my-project.conf
+#   # Edit my-project.conf with your site's details
+#   podman exec mm_dock_caddy caddy reload --config /etc/caddy/Caddyfile
+
+https://my-project.localhost:8443 {
+    # Absolute path to the public/ directory of your Laravel project.
+    # The APPLICATION_LOCATION in .env defaults to /var/www, so your
+    # project will typically be at /var/www/<subfolder>/<project-name>.
+    root * /var/www/<subfolder>/<project-name>/public
+
+    # Enable gzip compression
+    encode gzip
+
+    # Forward PHP requests to php-fpm
+    php_fastcgi php-fpm:9000
+
+    # Serve static files directly
+    file_server
+
+    # Laravel routing: fall through to index.php for non-file requests
+    @notFile {
+        not file
+    }
+    rewrite @notFile /index.php?{query}
+
+    # Use Caddy's internal self-signed certificate (trusted locally)
+    tls internal
+
+    # Log to stdout - visible via: podman logs mm_dock_caddy
+    log {
+        output stdout
+        format json
+    }
+}
