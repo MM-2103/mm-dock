@@ -96,4 +96,5 @@ auth.json
 ######################################################
 /caddy/sites/*
 !/caddy/sites/.gitkeep
+!/caddy/sites/*.example
 
