@@ -7,4 +7,4 @@ http://localhost:8080 {
 }
 
 # Import per-site configuration files
-import /etc/caddy/sites/*
+import /etc/caddy/sites/*.conf
